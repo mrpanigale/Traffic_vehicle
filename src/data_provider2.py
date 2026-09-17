@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader,Subset
 from sklearn.model_selection import StratifiedShuffleSplit
 
 # compute hash and open images requires -->
-
+from collections import defaultdict
 import hashlib
 from PIL import Image
 from torchvision import transforms
@@ -103,17 +103,29 @@ def data_cleaner(train_set_path:Path, test_set_path:Path,unclean_set_path:Path):
                 except Exception as e:
                     report["corrupt"].append(path)
 
-
+    #each hash code has counter= 0
     train_hash_counter = {hash_code:0 for hash_code,path,_ in report["train_hashes"]}
+    # test hashe codes to check duplicates between train and test
     test_hashes = set([hash_code for hash_code,_,_ in report["test_hashes"]])
-    unclean_hashes = {hash_code:path for hash_code,path,_ in report["unclean_hashes"]}
+
+    # path and label for each hash code for unclean set
+    unclean_hashes = defaultdict(list)
+    for hash_code, path, label in report["unclean_hashes"]:
+        unclean_hashes[hash_code].append((path,label))
+
+    # unclean_hashes = {hash_code:path for hash_code,path,_ in report["unclean_hashes"]}
 
     # key --> hash , value --> label
     test_labels = {hash_code:label for hash_code, _, label in report["test_hashes"]}
-    unclean_labels = {hash_code: label for hash_code, _, label in report["unclean_hashes"]}
+
+    # unclean_labels = {hash_code: label for hash_code, _, label in report["unclean_hashes"]}
+
+    # will be used for internal duplicates
     train_first_seen_label = {}
 
+    # run a for loop in train_hashes , labels, paths
     for hash_code,path,label in report["train_hashes"]:
+
 
         # train duplicates with test
         if hash_code in test_hashes:
@@ -127,30 +139,34 @@ def data_cleaner(train_set_path:Path, test_set_path:Path,unclean_set_path:Path):
         if hash_code in train_hash_counter:
             #assign label to hash for first time
             if train_hash_counter[hash_code] == 0 :
-                train_first_seen_label[hash_code] = label
+                train_first_seen_label[hash_code] = (path,label)
 
             train_hash_counter[hash_code] += 1
             if train_hash_counter[hash_code] >= 2:
                 # train path most remove from training
                 report["train_internal_duplicates"].append(path)
-                if label != train_first_seen_label[hash_code]:
+                first_path, first_label = train_first_seen_label[hash_code]
+
+                if label != first_label:
                     report["train_internal_conflicts"].append(path)
+                    report["train_internal_conflicts"].append(first_path)
+
+
 
         # unclean duplicates with train
         if hash_code in unclean_hashes:
-            # unclean hash most remove from unclean --> Value == path unclean
-            report["unclean_duplicates"].append(unclean_hashes[hash_code])
-            if label != unclean_labels[hash_code]:
-                report["unclean_conflicts"].append(unclean_hashes[hash_code])
+            for unclean_hash, unclean_label in unclean_hashes[hash_code]:
+                report["unclean_duplicates"].append(unclean_hash)
+                if label != unclean_label:
+                    report["unclean_conflicts"].append(unclean_hash) # اینجا تصحیح شد
 
 
 
     return report
 
-def safe_path(train_set_path:Path, test_set_path:Path,unclean_set_path:Path,report:dict):
-    """this function returns safe paths that are not duplicates and don't have conflicts"""
 
-    pass
+
+
 
 def get_transform():
     """build suitable transforms for train and test
@@ -181,10 +197,57 @@ def get_transform():
 
     return aug_transform, base_transform
 
-def make_loader():
+def make_clean_dataset(unclean_set_path: Path,train_set_path:Path,test_set_path:Path,report:dict):
+    bad_paths = set(
+        report["corrupt"]
+        + report["test_duplicates"]
+        + report["unclean_duplicates"]
+        +report["train_internal_duplicates"]
+        +report["test_conflicts"]
+        +report["unclean_conflicts"]
+        +report["train_internal_conflicts"]
+    )
 
+    #check paths
+    bad_paths = {p.resolve() for p in  bad_paths}
+
+    # check paths function
+    def is_safe(file_path:str):
+        return Path(file_path).resolve() not in bad_paths
+    aug_transform ,base_transform= get_transform()
+
+
+    train = ImageFolder(
+        root=train_set_path,
+        transform=aug_transform,
+        is_valid_file=is_safe
+    )
+
+
+    validation = ImageFolder(
+        root=unclean_set_path,
+        transform=base_transform,
+        is_valid_file=is_safe
+    )
+
+    test = ImageFolder(
+        root=test_set_path,
+        transform=base_transform,
+        is_valid_file=is_safe
+    )
+
+    return train, validation, test
+
+def make_loader(train_set,validation_set,test_set):
     """make loader for train and test"""
 
+    train_loader = DataLoader(train_set,batch_size=32,shuffle=True,num_workers=0)
+
+    validation_loader = DataLoader(validation_set,batch_size=64,shuffle=False,num_workers=0)
+
+    test_loader = DataLoader(test_set,batch_size=64,shuffle=False,num_workers=0)
+
+    return train_loader, validation_loader, test_loader
 
 
 #@-----------------Test-Block-----------------@
@@ -206,5 +269,20 @@ if __name__ == "__main__":
     else:
         raise FileNotFoundError("test path does not exist")
 
-    output = data_cleaner(train_path, test_path, unclean_path)
-    print(len(output["unclean_duplicates"]))
+    # out put data cleaner
+    cleaner_output = data_cleaner(train_path,test_path,unclean_path)
+    #output make clean dataset
+    dataset_train, dataset_validation, dataset_test = make_clean_dataset(unclean_path,train_path,test_path,cleaner_output)
+    #output make loader
+    train_loader, validation_loader, test_loader = make_loader(dataset_train,dataset_validation,dataset_test)
+
+    train_image,train_label = next(iter(train_loader))
+    validation_image,validation_label = next(iter(validation_loader))
+    test_image,test_label = next(iter(test_loader))
+
+    print("train_image",train_image.shape)
+    print("train_label",train_label.shape)
+    print("validation_image",validation_image.shape)
+    print("validation_label",validation_label.shape)
+    print("test_image",test_image.shape)
+    print("test_label",test_label.shape)
