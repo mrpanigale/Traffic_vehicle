@@ -5,6 +5,7 @@ Preprocess images, find out duplicates and build clean DataLoaders.
 #@-----------------imports-----------------@
 # path and torch requires
 from pathlib import Path
+import json
 import torch
 
 # loaders requires -->
@@ -27,7 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 unclean_path = ROOT / "data_set" / "unclean"
 train_path = ROOT / "data_set" / "train"
 test_path = ROOT / "data_set" / "test"
-
+report_path = ROOT / "reports" / "preprocess"
 #@-----------------functions-----------------@
 def compute_hashes(img_path: Path):
     """compute hash code to identify images
@@ -176,13 +177,11 @@ def get_transform():
 
     #training with augmentation transform
     aug_transform = transforms.Compose([
-        transforms.Resize((224,224)),
-        transforms.ToTensor(),
-        transforms.ColorJitter(brightness=0.2,contrast=0.2),
+        transforms.Resize((224, 224)),
+        transforms.ColorJitter(brightness=0.2, contrast=0.2),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225])
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     # Validation and Test transform
@@ -249,7 +248,8 @@ def make_loader(train_set,validation_set,test_set):
 
     return train_loader, validation_loader, test_loader
 
-
+def to_str_list(xs):
+    return [str(p) for p in xs]
 #@-----------------Test-Block-----------------@
 if __name__ == "__main__":
 
@@ -286,3 +286,36 @@ if __name__ == "__main__":
     print("validation_label",validation_label.shape)
     print("test_image",test_image.shape)
     print("test_label",test_label.shape)
+
+    # save report
+
+    # "corrupt": [],
+    # "train_hashes": [],
+    # "test_hashes": [],
+    # "unclean_hashes": [],
+    #
+    # "train_internal_duplicates": [],
+    # "test_duplicates": [],
+    # "unclean_duplicates": [],
+    #
+    # "train_internal_conflicts": [],
+    # "test_conflicts": [],
+    # "unclean_conflicts": [],
+
+
+
+
+    report_json = {
+        "corrupt": to_str_list(cleaner_output["corrupt"]),
+        "train_internal_duplicates": to_str_list(cleaner_output["train_internal_duplicates"]),
+        "unclean_duplicates": to_str_list(cleaner_output["unclean_duplicates"]),
+        "test_duplicates": to_str_list(cleaner_output["test_duplicates"]),
+        "train_internal_conflicts": to_str_list(cleaner_output["train_internal_conflicts"]),
+        "unclean_conflicts": to_str_list(cleaner_output["unclean_conflicts"]),
+        "test_conflicts": to_str_list(cleaner_output["test_conflicts"]),
+    }
+
+    report_path= report_path / "data_audit_report.json"
+    with open(report_path, "w", encoding="utf-8") as f:
+        json.dump(report_json, f, indent=4)
+    print(f"[Audit] Report saved -> {report_json}")
