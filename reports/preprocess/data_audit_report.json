@@ -1,99 +1,28 @@
 {
-    "train_class_counts": {
-        "ambulance": 50,
-        "autobus": 50,
-        "kamyun": 50,
-        "kamyunet": 50,
-        "minibus": 50,
-        "savari": 50,
-        "taxi": 50,
-        "vanet": 50
-    },
-    "min_size": [
-        120,
-        156
+    "corrupt": [],
+    "train_internal_duplicates": [],
+    "unclean_duplicates": [
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\199984667.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\206808986.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\208738861.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\213342200.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\213801906.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\216216403.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\218591595.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\218966979.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\autobus\\218337345.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\kamyunet\\193903806.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\kamyunet\\194270924.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\kamyunet\\195578789.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\kamyunet\\217156552.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\minibus\\198331521.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\minibus\\205737488.jpg",
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\neysan\\214844236.jpg"
     ],
-    "max_size": [
-        545,
-        870
+    "test_duplicates": [],
+    "train_internal_conflicts": [],
+    "unclean_conflicts": [
+        "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\neysan\\214844236.jpg"
     ],
-    "corrupt_files": [],
-    "internal_duplicates": [],
-    "train_test_leaks": [],
-    "train_unclean_overlap": [
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\ambulance\\199984667.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\199984667.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\ambulance\\206808986.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\206808986.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\ambulance\\208738861.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\208738861.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\ambulance\\213342200.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\213342200.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\ambulance\\213801906.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\213801906.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\ambulance\\216216403.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\216216403.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\ambulance\\218591595.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\218591595.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\ambulance\\218966979.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\ambulance\\218966979.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\autobus\\218337345.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\autobus\\218337345.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\kamyunet\\193903806.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\kamyunet\\193903806.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\kamyunet\\194270924.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\kamyunet\\194270924.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\kamyunet\\195578789.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\kamyunet\\195578789.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\kamyunet\\217156552.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\kamyunet\\217156552.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\minibus\\198331521.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\minibus\\198331521.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\minibus\\205737488.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\minibus\\205737488.jpg"
-        },
-        {
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\vanet\\214844236.jpg",
-            "unclean_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\neysan\\214844236.jpg"
-        }
-    ],
-    "label_conflicts": [
-        {
-            "source": "train_vs_unclean",
-            "train_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\train\\vanet\\214844236.jpg",
-            "other_file": "E:\\MLprojects\\Traffic-Vehicle\\data_set\\unclean\\neysan\\214844236.jpg",
-            "train_label": "vanet",
-            "other_label": "neysan"
-        }
-    ],
-    "excluded_train_count": 0
+    "test_conflicts": []
 }
