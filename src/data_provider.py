@@ -7,11 +7,11 @@ Preprocess images, find out duplicates and build clean DataLoaders.
 from pathlib import Path
 import json
 import torch
-
+import numpy as np
 # loaders requires -->
-
+from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import DataLoader,Subset
-from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import train_test_split
 
 # compute hash and open images requires -->
 from collections import defaultdict
@@ -29,6 +29,15 @@ unclean_path = ROOT / "data_set" / "unclean"
 train_path = ROOT / "data_set" / "train"
 test_path = ROOT / "data_set" / "test"
 report_path = ROOT / "reports" / "preprocess"
+#@-----------------classes-----------------@
+class RGBImageFolder(ImageFolder):
+    def __getitem__(self, index):
+        path, target = self.samples[index]
+        sample = self.loader(path).convert("RGB")
+        if self.transform is not None:
+            sample = self.transform(sample)
+        return sample, target
+
 #@-----------------functions-----------------@
 def compute_hashes(img_path: Path):
     """compute hash code to identify images
@@ -48,7 +57,24 @@ def compute_hashes(img_path: Path):
         return hasher.hexdigest()
 
 
+def get_balanced_sampler(dataset):
+    if isinstance(dataset, Subset):
+        all_targets = np.array(dataset.dataset.targets)
+        targets = torch.tensor(all_targets[dataset.indices])
+    else:
+        targets = torch.tensor(dataset.targets)
 
+    class_counts = torch.bincount(targets)
+    class_weights = 1. / class_counts.float()
+
+    sample_weights = [class_weights[t] for t in targets]
+
+    sampler = WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(sample_weights),
+        replacement=True
+    )
+    return sampler
 
 
 def data_cleaner(train_set_path:Path, test_set_path:Path,unclean_set_path:Path):
@@ -216,37 +242,60 @@ def make_clean_dataset(unclean_set_path: Path,train_set_path:Path,test_set_path:
     aug_transform ,base_transform= get_transform()
 
 
-    train = ImageFolder(
+    train = RGBImageFolder(
         root=train_set_path,
         transform=aug_transform,
         is_valid_file=is_safe
     )
 
+    train_base = RGBImageFolder(
+        root=train_set_path,
+        transform=base_transform,
+        is_valid_file=is_safe
+    )
 
-    validation = ImageFolder(
+    unclean = RGBImageFolder(
         root=unclean_set_path,
         transform=base_transform,
         is_valid_file=is_safe
     )
 
-    test = ImageFolder(
+    test = RGBImageFolder(
         root=test_set_path,
         transform=base_transform,
         is_valid_file=is_safe
     )
 
-    return train, validation, test
+    return train,train_base, unclean, test
 
-def make_loader(train_set,validation_set,test_set):
+def make_loader(train_set,train_base_set,unclean_set,test_set):
     """make loader for train and test"""
+    targets = [label for _, label in train_set.samples]
 
-    train_loader = DataLoader(train_set,batch_size=32,shuffle=True,num_workers=0)
+    train_idx, val_idx = train_test_split(
+    np.arange(len(targets)),
+        test_size=0.20,
+        shuffle=True,
+        stratify=targets,
+        random_state=42,
+    )
 
-    validation_loader = DataLoader(validation_set,batch_size=64,shuffle=False,num_workers=0)
+    train_subset = Subset(train_set, train_idx)
+    val_subset = Subset(train_base_set, val_idx)
+
+    sampler = get_balanced_sampler(train_subset)
+
+    train_loader = DataLoader(train_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
+
+    validation_loader = DataLoader(val_subset,batch_size=32,shuffle=False,num_workers=0)
+
+    unclean_loader = DataLoader(unclean_set,batch_size=64,shuffle=False,num_workers=0)
 
     test_loader = DataLoader(test_set,batch_size=64,shuffle=False,num_workers=0)
 
-    return train_loader, validation_loader, test_loader
+    return train_loader, validation_loader,unclean_loader, test_loader
+
+
 
 def to_str_list(xs):
     return [str(p) for p in xs]
@@ -272,9 +321,9 @@ if __name__ == "__main__":
     # out put data cleaner
     cleaner_output = data_cleaner(train_path,test_path,unclean_path)
     #output make clean dataset
-    dataset_train, dataset_validation, dataset_test = make_clean_dataset(unclean_path,train_path,test_path,cleaner_output)
+    dataset_train,dataset_train_base, dataset_unclean, dataset_test = make_clean_dataset(unclean_path,train_path,test_path,cleaner_output)
     #output make loader
-    train_loader, validation_loader, test_loader = make_loader(dataset_train,dataset_validation,dataset_test)
+    train_loader, validation_loader,unclean_loader, test_loader = make_loader(dataset_train,dataset_train_base,dataset_unclean,dataset_test)
 
     train_image,train_label = next(iter(train_loader))
     validation_image,validation_label = next(iter(validation_loader))
