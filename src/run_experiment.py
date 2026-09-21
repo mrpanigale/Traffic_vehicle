@@ -47,7 +47,7 @@ def run_epoch(model,loss_fn,loader,device,optimizer=None):
         "cm":confusion_matrix(
             y_true=all_labels,
             y_pred = all_logits,
-            labels=list(range(10))
+            labels=list(range(8))
 )
     }
 
