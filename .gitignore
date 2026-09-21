@@ -4,4 +4,6 @@ notebooks/
 data_set/
 project-kernel/
 my_project.egg-info/
+models/
+__pycache__/
 # files
