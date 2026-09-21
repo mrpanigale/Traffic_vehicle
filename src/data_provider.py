@@ -8,6 +8,7 @@ from pathlib import Path
 import json
 import torch
 import numpy as np
+import random
 # loaders requires -->
 from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import DataLoader,Subset
@@ -29,6 +30,7 @@ unclean_path = ROOT / "data_set" / "unclean"
 train_path = ROOT / "data_set" / "train"
 test_path = ROOT / "data_set" / "test"
 report_path = ROOT / "reports" / "preprocess"
+SEED = 42
 #@-----------------classes-----------------@
 class RGBImageFolder(ImageFolder):
     def __getitem__(self, index):
@@ -39,6 +41,14 @@ class RGBImageFolder(ImageFolder):
         return sample, target
 
 #@-----------------functions-----------------@
+def set_seed(seed=SEED):
+    """control random seed for reproducibility"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 def compute_hashes(img_path: Path):
     """compute hash code to identify images
     Return:
@@ -287,7 +297,7 @@ def make_loader(train_set,train_base_set,unclean_set,test_set):
 
     train_loader = DataLoader(train_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
 
-    validation_loader = DataLoader(val_subset,batch_size=32,shuffle=False,num_workers=0)
+    validation_loader = DataLoader(val_subset,batch_size=64,shuffle=False,num_workers=0)
 
     unclean_loader = DataLoader(unclean_set,batch_size=64,shuffle=False,num_workers=0)
 
@@ -301,7 +311,7 @@ def to_str_list(xs):
     return [str(p) for p in xs]
 #@-----------------Test-Block-----------------@
 if __name__ == "__main__":
-
+    set_seed(SEED)
     # check if paths exist?
     if unclean_path.exists():
         print("unclean path exists")
@@ -337,23 +347,6 @@ if __name__ == "__main__":
     print("test_label",test_label.shape)
 
     # save report
-
-    # "corrupt": [],
-    # "train_hashes": [],
-    # "test_hashes": [],
-    # "unclean_hashes": [],
-    #
-    # "train_internal_duplicates": [],
-    # "test_duplicates": [],
-    # "unclean_duplicates": [],
-    #
-    # "train_internal_conflicts": [],
-    # "test_conflicts": [],
-    # "unclean_conflicts": [],
-
-
-
-
     report_json = {
         "corrupt": to_str_list(cleaner_output["corrupt"]),
         "train_internal_duplicates": to_str_list(cleaner_output["train_internal_duplicates"]),
