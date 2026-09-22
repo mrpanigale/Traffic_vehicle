@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 
 # compute hash and open images requires -->
 from collections import defaultdict
-import hashlib
+import imagehash
 from PIL import Image
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
@@ -50,12 +50,12 @@ def set_seed(seed=SEED):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 def compute_hashes(img_path: Path):
-    """compute hash code to identify images
-    Return:
-        hash code
-    """
-    # build hasher obj
-    hasher = hashlib.md5()
+    """compute perceptual hash to identify visually similar images"""
+    with Image.open(img_path).convert('L') as img:
+        hash_obj = imagehash.phash(img)
+        return str(hash_obj)
+
+
 
     # open image
     with open(img_path, "rb") as img:
