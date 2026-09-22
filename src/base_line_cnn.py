@@ -124,7 +124,7 @@ dataset_train, dataset_train_base, dataset_unclean, dataset_test = make_clean_da
     cleaner_output
 )
 
-train_loader, validation_loader, unclean_loader, test_loader = make_loader(
+_,train_base_loader, validation_loader, unclean_loader, test_loader = make_loader(
     dataset_train,
     dataset_train_base,
     dataset_unclean,
@@ -144,7 +144,7 @@ classes = dataset_train.classes
 start_time = time.perf_counter()
 history,best_epoch,model = run_experiment(
     model=cnn_base,
-    train_loader=train_loader,
+    train_loader=train_base_loader,
     val_loader=validation_loader,
     loss_fn=loss_fn,
     optimizer=optimizer,
