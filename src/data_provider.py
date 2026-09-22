@@ -296,7 +296,9 @@ def make_loader(train_set,train_base_set,unclean_set,test_set):
     val_subset = Subset(train_base_set, val_idx)
 
     sampler = get_balanced_sampler(train_subset)
+    train_base_subset = Subset(train_base_set,train_idx)
 
+    train_base_loader = DataLoader(train_base_subset,batch_size=32,shuffle=False,num_workers=0)
     train_loader = DataLoader(train_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
 
     validation_loader = DataLoader(val_subset,batch_size=64,shuffle=False,num_workers=0)
@@ -305,7 +307,7 @@ def make_loader(train_set,train_base_set,unclean_set,test_set):
 
     test_loader = DataLoader(test_set,batch_size=64,shuffle=False,num_workers=0)
 
-    return train_loader, validation_loader,unclean_loader, test_loader
+    return train_loader,train_base_loader, validation_loader,unclean_loader, test_loader
 
 
 
@@ -335,14 +337,19 @@ if __name__ == "__main__":
     #output make clean dataset
     dataset_train,dataset_train_base, dataset_unclean, dataset_test = make_clean_dataset(unclean_path,train_path,test_path,cleaner_output)
     #output make loader
-    train_loader, validation_loader,unclean_loader, test_loader = make_loader(dataset_train,dataset_train_base,dataset_unclean,dataset_test)
+    train_loader, train_base_loader,validation_loader,unclean_loader, test_loader = make_loader(dataset_train,dataset_train_base,dataset_unclean,dataset_test)
 
     train_image,train_label = next(iter(train_loader))
+    train_b_image,train_b_label = next(iter(train_base_loader))
+
     validation_image,validation_label = next(iter(validation_loader))
     test_image,test_label = next(iter(test_loader))
 
     print("train_image",train_image.shape)
     print("train_label",train_label.shape)
+
+    print("train_base_image", train_image.shape)
+    print("train_base_label", train_label.shape)
     print("validation_image",validation_image.shape)
     print("validation_label",validation_label.shape)
     print("test_image",test_image.shape)
