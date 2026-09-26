@@ -119,17 +119,16 @@ else:
 
 cleaner_output = data_cleaner(train_path,test_path,unclean_path)
 
-dataset_train, dataset_train_base, dataset_unclean, dataset_test = make_clean_dataset(
+dataset_train, dataset_train_base, dataset_test = make_clean_dataset(
     unclean_path,
     train_path,
     test_path,
     cleaner_output
 )
 
-_,train_base_loader, validation_loader, unclean_loader, test_loader = make_loader(
+_,train_base_loader, validation_loader, test_loader = make_loader(
     dataset_train,
     dataset_train_base,
-    dataset_unclean,
     dataset_test
 )
 

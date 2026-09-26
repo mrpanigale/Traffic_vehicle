@@ -312,7 +312,7 @@ def make_loader(train_set,train_base_set,test_set):
     sampler = get_balanced_sampler(train_subset)
     train_base_subset = Subset(train_base_set,train_idx)
 
-    train_base_loader = DataLoader(train_base_subset,batch_size=32,shuffle=False,num_workers=0)
+    train_base_loader = DataLoader(train_base_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
     train_loader = DataLoader(train_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
 
     validation_loader = DataLoader(val_subset,batch_size=64,shuffle=False,num_workers=0)

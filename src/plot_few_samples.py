@@ -34,17 +34,16 @@ else:
 
 cleaner_output = data_cleaner(train_path,test_path,unclean_path)
 
-_, dataset_train_base, _, _ = make_clean_dataset(
+_, dataset_train_base, _ = make_clean_dataset(
     unclean_path,
     train_path,
     test_path,
     cleaner_output
 )
 
-_,train_base_loader, _, _, _ = make_loader(
+_,train_base_loader, _, _ = make_loader(
     _,
     dataset_train_base,
-    _,
     _
 )
 
