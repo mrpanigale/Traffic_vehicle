@@ -260,17 +260,31 @@ def make_clean_dataset(unclean_set_path: Path,train_set_path:Path,test_set_path:
         is_valid_file=is_safe
     )
 
+    unclean = RGBImageFolder(
+        root=unclean_set_path,
+        transform=aug_transform,
+        is_valid_file=is_safe
+    )
+
     train_base = RGBImageFolder(
         root=train_set_path,
         transform=base_transform,
         is_valid_file=is_safe
     )
 
-    unclean = RGBImageFolder(
+    unclean_base = RGBImageFolder(
         root=unclean_set_path,
         transform=base_transform,
         is_valid_file=is_safe
     )
+
+    assert train.class_to_idx == unclean.class_to_idx, "Class mapping mismatch!"
+
+    train.samples.extend(unclean.samples)
+    train.targets.extend(unclean.targets)
+
+    train_base.samples.extend(unclean_base.samples)
+    train_base.targets.extend(unclean_base.targets)
 
     test = RGBImageFolder(
         root=test_set_path,
@@ -278,9 +292,9 @@ def make_clean_dataset(unclean_set_path: Path,train_set_path:Path,test_set_path:
         is_valid_file=is_safe
     )
 
-    return train,train_base, unclean, test
+    return train,train_base, test
 
-def make_loader(train_set,train_base_set,unclean_set,test_set):
+def make_loader(train_set,train_base_set,test_set):
     """make loader for train and test"""
     targets = [label for _, label in train_set.samples]
 
@@ -303,11 +317,11 @@ def make_loader(train_set,train_base_set,unclean_set,test_set):
 
     validation_loader = DataLoader(val_subset,batch_size=64,shuffle=False,num_workers=0)
 
-    unclean_loader = DataLoader(unclean_set,batch_size=64,shuffle=False,num_workers=0)
+
 
     test_loader = DataLoader(test_set,batch_size=64,shuffle=False,num_workers=0)
 
-    return train_loader,train_base_loader, validation_loader,unclean_loader, test_loader
+    return train_loader,train_base_loader, validation_loader, test_loader
 
 
 
@@ -335,9 +349,9 @@ if __name__ == "__main__":
     # out put data cleaner
     cleaner_output = data_cleaner(train_path,test_path,unclean_path)
     #output make clean dataset
-    dataset_train,dataset_train_base, dataset_unclean, dataset_test = make_clean_dataset(unclean_path,train_path,test_path,cleaner_output)
+    dataset_train,dataset_train_base, dataset_test = make_clean_dataset(unclean_path,train_path,test_path,cleaner_output)
     #output make loader
-    train_loader, train_base_loader,validation_loader,unclean_loader, test_loader = make_loader(dataset_train,dataset_train_base,dataset_unclean,dataset_test)
+    train_loader, train_base_loader,validation_loader, test_loader = make_loader(dataset_train,dataset_train_base,dataset_test)
 
     train_image,train_label = next(iter(train_loader))
     train_b_image,train_b_label = next(iter(train_base_loader))
@@ -348,8 +362,8 @@ if __name__ == "__main__":
     print("train_image",train_image.shape)
     print("train_label",train_label.shape)
 
-    print("train_base_image", train_image.shape)
-    print("train_base_label", train_label.shape)
+    print("train_base_image", train_b_image.shape)
+    print("train_base_label", train_b_label.shape)
     print("validation_image",validation_image.shape)
     print("validation_label",validation_label.shape)
     print("test_image",test_image.shape)
