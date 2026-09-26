@@ -43,60 +43,96 @@ plot_report_path.mkdir(parents=True, exist_ok=True)
 models_path.mkdir(parents=True, exist_ok=True)
 
 #=============Model-CNN-Base==============
+import torch.nn as nn
+
 
 class CnnDropout(nn.Module):
-    """CNN base class with  dropout and 2 block Conv + activation + pooling"""
-    def __init__(self,num_classes=8,dropout_rate=0.3):
+    """CNN with 4 Conv blocks and Dropout in Classifier Head (Ablation study on Regularization)."""
+
+    def __init__(self, num_classes=8, dropout_rate=0.3):
         super().__init__()
 
-        #=====block-1=======
+        # ===== Block 1 =====
         self.conv1 = nn.Conv2d(
             in_channels=3,
             out_channels=32,
             kernel_size=3,
             bias=False,
-            padding=1)
-
+            padding=1,
+        )
         self.norm1 = nn.BatchNorm2d(num_features=32)
-        #=======block-2========
+
+        # ===== Block 2 =====
         self.conv2 = nn.Conv2d(
             in_channels=32,
             out_channels=64,
             kernel_size=3,
+            bias=False,
             padding=1,
-            bias=False
         )
-
-        #=======utils==========
         self.norm2 = nn.BatchNorm2d(num_features=64)
+
+        # ===== Block 3 =====
+        self.conv3 = nn.Conv2d(
+            in_channels=64,
+            out_channels=128,
+            kernel_size=3,
+            bias=False,
+            padding=1,
+        )
+        self.norm3 = nn.BatchNorm2d(num_features=128)
+
+        # ===== Block 4 =====
+        self.conv4 = nn.Conv2d(
+            in_channels=128,
+            out_channels=256,
+            kernel_size=3,
+            bias=False,
+            padding=1,
+        )
+        self.norm4 = nn.BatchNorm2d(num_features=256)
+
+        # ===== Utils =====
         self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.relu = nn.ReLU()
 
-        #========Classifier-Head=========
+        # ===== Classifier Head =====
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
-            nn.Linear(in_features=64, out_features=64),
+            nn.Linear(in_features=256, out_features=256),
             nn.ReLU(),
             nn.Dropout(p=dropout_rate),
-            nn.Linear(in_features=64, out_features=num_classes),
+            nn.Linear(in_features=256, out_features=num_classes),
         )
 
-
-    #==========forward==========
     def forward(self, x):
-        #======layer-1=========
+        # Layer 1
         out_conv1 = self.conv1(x)
         out_norm1 = self.norm1(out_conv1)
-        out_relu = self.relu(out_norm1)
-        out_max_pool1 = self.max_pool(out_relu)
-        #=======layer-2=========
+        out_relu1 = self.relu(out_norm1)
+        out_max_pool1 = self.max_pool(out_relu1)
+
+        # Layer 2
         out_conv2 = self.conv2(out_max_pool1)
         out_norm2 = self.norm2(out_conv2)
         out_relu2 = self.relu(out_norm2)
         out_max_pool2 = self.max_pool(out_relu2)
-        #=======FC-layer=========
-        out_fc = self.head(out_max_pool2)
+
+        # Layer 3
+        out_conv3 = self.conv3(out_max_pool2)
+        out_norm3 = self.norm3(out_conv3)
+        out_relu3 = self.relu(out_norm3)
+        out_max_pool3 = self.max_pool(out_relu3)
+
+        # Layer 4
+        out_conv4 = self.conv4(out_max_pool3)
+        out_norm4 = self.norm4(out_conv4)
+        out_relu4 = self.relu(out_norm4)
+        out_max_pool4 = self.max_pool(out_relu4)
+
+        # Classifier Head
+        out_fc = self.head(out_max_pool4)
         return out_fc
 
 

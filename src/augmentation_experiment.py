@@ -47,7 +47,7 @@ models_path.mkdir(parents=True, exist_ok=True)
 #=============Model-CNN-Base==============
 
 class CnnAug(nn.Module):
-    """CNN with augmented train_data, Same structure with base_model; class with 2 block Conv + acitvation + pooling"""
+    """CNN base class with 2 block Conv + acitvation + pooling"""
     def __init__(self,num_classes=8):
         super().__init__()
 
@@ -70,6 +70,29 @@ class CnnAug(nn.Module):
         )
 
         self.norm2 = nn.BatchNorm2d(num_features=64)
+
+        # =======block-3========
+        self.conv3= nn.Conv2d(
+            in_channels=64,
+            out_channels=128,
+            kernel_size=3,
+            padding=1,
+            bias=False
+        )
+
+        self.norm3 = nn.BatchNorm2d(num_features=128)
+
+        # =======block-4========
+        self.conv4 = nn.Conv2d(
+            in_channels=128,
+            out_channels=256,
+            kernel_size=3,
+            padding=1,
+            bias=False
+        )
+
+        self.norm4 = nn.BatchNorm2d(num_features=256)
+
         self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.relu = nn.ReLU()
 
@@ -77,9 +100,9 @@ class CnnAug(nn.Module):
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
-            nn.Linear(in_features=64, out_features=64),
+            nn.Linear(in_features=256, out_features=256),
             nn.ReLU(),
-            nn.Linear(in_features=64, out_features=num_classes),
+            nn.Linear(in_features=256, out_features=num_classes),
         )
 
 
@@ -95,8 +118,19 @@ class CnnAug(nn.Module):
         out_norm2 = self.norm2(out_conv2)
         out_relu2 = self.relu(out_norm2)
         out_max_pool2 = self.max_pool(out_relu2)
+        #=======layer-3=========
+        out_conv3 = self.conv3(out_max_pool2)
+        out_norm3 = self.norm3(out_conv3)
+        out_relu3 = self.relu(out_norm3)
+        out_max_pool3 = self.max_pool(out_relu3)
+
+        # =======layer-4=========
+        out_conv4 = self.conv4(out_max_pool3)
+        out_norm4 = self.norm4(out_conv4)
+        out_relu4 = self.relu(out_norm4)
+        out_max_pool4 = self.max_pool(out_relu4)
         #=======FC-layer=========
-        out_fc = self.head(out_max_pool2)
+        out_fc = self.head(out_max_pool4)
         return out_fc
 
 

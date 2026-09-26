@@ -42,61 +42,53 @@ csv_report_path.mkdir(parents=True, exist_ok=True)
 plot_report_path.mkdir(parents=True, exist_ok=True)
 models_path.mkdir(parents=True, exist_ok=True)
 
-#=============Model-CNN-Base==============
+#=============Model-CNN-Average-Pool==============
+class CnnAvgPool(nn.Module):
+    """CNN with 4 Conv blocks and AvgPool2d (Ablation study on Pooling method)."""
 
-class CnnBase(nn.Module):
-    """CNN base class with 2 block Conv + acitvation + pooling"""
-    def __init__(self,num_classes=8):
+    def __init__(self, num_classes=8):
         super().__init__()
 
-        #=====block-1=======
-        self.conv1 = nn.Conv2d(
-            in_channels=3,
-            out_channels=32,
-            kernel_size=3,
-            bias=False,
-            padding=1)
+        # ===== Block 1 =====
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1, bias=False)
+        self.norm1 = nn.BatchNorm2d(32)
 
-        self.norm1 = nn.BatchNorm2d(num_features=32)
-        #=======block-2========
-        self.conv2 = nn.Conv2d(
-            in_channels=32,
-            out_channels=64,
-            kernel_size=3,
-            padding=1,
-            bias=False
-        )
+        # ===== Block 2 =====
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1, bias=False)
+        self.norm2 = nn.BatchNorm2d(64)
 
-        self.norm2 = nn.BatchNorm2d(num_features=64)
-        self.max_pool = nn.AvgPool2d(kernel_size=2, stride=2)
+        # ===== Block 3 =====
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1, bias=False)
+        self.norm3 = nn.BatchNorm2d(128)
+
+        # ===== Block 4 =====
+        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, padding=1, bias=False)
+        self.norm4 = nn.BatchNorm2d(256)
+
+        self.pool = nn.AvgPool2d(kernel_size=2, stride=2)
         self.relu = nn.ReLU()
 
-        #========Classifier-Head=========
+        # ===== Classifier Head =====
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
-            nn.Linear(in_features=64, out_features=64),
+            nn.Linear(in_features=256, out_features=256),
             nn.ReLU(),
-            nn.Linear(in_features=64, out_features=num_classes),
+            nn.Linear(in_features=256, out_features=num_classes),
         )
 
-
-    #==========forward==========
     def forward(self, x):
-        #======layer-1=========
-        out_conv1 = self.conv1(x)
-        out_norm1 = self.norm1(out_conv1)
-        out_relu = self.relu(out_norm1)
-        out_max_pool1 = self.max_pool(out_relu)
-        #=======layer-2=========
-        out_conv2 = self.conv2(out_max_pool1)
-        out_norm2 = self.norm2(out_conv2)
-        out_relu2 = self.relu(out_norm2)
-        out_max_pool2 = self.max_pool(out_relu2)
-        #=======FC-layer=========
-        out_fc = self.head(out_max_pool2)
-        return out_fc
+        # Layer 1
+        x = self.pool(self.relu(self.norm1(self.conv1(x))))
+        # Layer 2
+        x = self.pool(self.relu(self.norm2(self.conv2(x))))
+        # Layer 3
+        x = self.pool(self.relu(self.norm3(self.conv3(x))))
+        # Layer 4
+        x = self.pool(self.relu(self.norm4(self.conv4(x))))
 
+        # FC Head
+        return self.head(x)
 
 #=========load-data============
 if unclean_path.exists():
@@ -133,7 +125,7 @@ _,train_base_loader, validation_loader, test_loader = make_loader(
 
 
 #==========train-requires-obj===========
-cnn_base = CnnBase().to(DEVICE)
+cnn_base = CnnAvgPool().to(DEVICE)
 
 loss_fn = nn.CrossEntropyLoss()
 
