@@ -4,20 +4,22 @@ and returns the loss and accuracy for training and validation and Confusion matr
 the trained model, and so on.
 """
 
-#=========imports==========
+# =========imports==========
 from pathlib import Path
 import copy
 import pandas as pd
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from data_provider import set_seed,SEED
+from data_provider import set_seed, SEED
 import seaborn as sns
-from sklearn.metrics import confusion_matrix,f1_score,classification_report
+from sklearn.metrics import confusion_matrix, f1_score, classification_report
 
 set_seed(SEED)
-#==============functions===============
-def run_epoch(model,loss_fn,loader,device,optimizer=None,class_names=None):
+
+
+# ==============functions===============
+def run_epoch(model, loss_fn, loader, device, optimizer=None, class_names=None):
     """This function runs one epoch of training and validation."""
     is_training = optimizer is not None
     model.to(device)
@@ -27,7 +29,6 @@ def run_epoch(model,loss_fn,loader,device,optimizer=None,class_names=None):
     if is_training:
         for module in getattr(model, "trainable_modules", [model]):
             module.train()
-
 
     total_loss = 0.0
     total_correct = 0
@@ -56,60 +57,51 @@ def run_epoch(model,loss_fn,loader,device,optimizer=None,class_names=None):
             all_preds.extend(preds)
 
     return {
-        "loss":total_loss/total_examples,
-        "accuracy":total_correct/total_examples,
-        "f1":f1_score(
-            all_labels,
-            all_preds,
-            average="macro",
-            zero_division=0
-        ),
-        "cm":confusion_matrix(
-            y_true=all_labels,
-            y_pred = all_logits,
-            labels=list(range(8))
+        "loss": total_loss / total_examples,
+        "accuracy": total_correct / total_examples,
+        "f1": f1_score(all_labels, all_preds, average="macro", zero_division=0),
+        "cm": confusion_matrix(
+            y_true=all_labels, y_pred=all_logits, labels=list(range(8))
         ),
         "classification_report": classification_report(
             y_true=all_labels,
             y_pred=all_preds,
             target_names=class_names,
             zero_division=0,
-            output_dict=True)
-
+            output_dict=True,
+        ),
     }
+
 
 def run_experiment(
-        model,
-        loss_fn,
-        train_loader,
-        val_loader,
-        device,
-        optimizer=None,
-        epochs = 8,
-        class_names =None,
-        scheduler=None
+    model,
+    loss_fn,
+    train_loader,
+    val_loader,
+    device,
+    optimizer=None,
+    epochs=8,
+    class_names=None,
+    scheduler=None,
 ):
-
     """This function runs experiments and return the reports"""
-    history= {
-        "train_loss":[],
-        "train_accuracy":[],
-        "train_f1":[],
-        "train_confusion_matrix":[],
-        "train_cf_report":[],
-
-        "val_loss":[],
-        "val_accuracy":[],
-        "val_f1":[],
-        "val_confusion_matrix":[],
-        "val_cf_report":[]
+    history = {
+        "train_loss": [],
+        "train_accuracy": [],
+        "train_f1": [],
+        "train_confusion_matrix": [],
+        "train_cf_report": [],
+        "val_loss": [],
+        "val_accuracy": [],
+        "val_f1": [],
+        "val_confusion_matrix": [],
+        "val_cf_report": [],
     }
 
-    #=====early-stopping======
+    # =====early-stopping======
     best_val_loss = float("inf")
     best_epoch = -1
     best_model_weight = None
-
 
     for epoch in range(epochs):
         # for train
@@ -119,15 +111,11 @@ def run_experiment(
             train_loader,
             device,
             optimizer=optimizer,
-            class_names = class_names
+            class_names=class_names,
         )
-        #for validation
+        # for validation
         val_metrics = run_epoch(
-            model,
-            loss_fn,
-            val_loader,
-            device,
-            class_names=class_names
+            model, loss_fn, val_loader, device, class_names=class_names
         )
         if scheduler:
             scheduler.step()
@@ -152,4 +140,4 @@ def run_experiment(
 
     if best_model_weight is not None:
         model.load_state_dict(best_model_weight)
-    return history,best_epoch,model
+    return history, best_epoch, model

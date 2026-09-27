@@ -1,23 +1,22 @@
-""" Test dropout with 2 different value 0.3 and 0.5  on base model ."""
+"""Test dropout with 2 different value 0.3 and 0.5  on base model ."""
 
-#===========import============
+# ===========import============
 from pathlib import Path
 import time
 from data_provider import (
-
-set_seed,
-SEED,
-compute_hashes,
-get_balanced_sampler,
-data_cleaner,
-get_transform,
-make_clean_dataset,
-make_loader,
-to_str_list,
-ROOT,
-unclean_path,
-train_path,
-test_path,
+    set_seed,
+    SEED,
+    compute_hashes,
+    get_balanced_sampler,
+    data_cleaner,
+    get_transform,
+    make_clean_dataset,
+    make_loader,
+    to_str_list,
+    ROOT,
+    unclean_path,
+    train_path,
+    test_path,
 )
 
 from run_experiment import run_experiment
@@ -28,12 +27,11 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-
-#===========control-randomness=============
+# ===========control-randomness=============
 set_seed(SEED)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#============paths===========
+# ============paths===========
 csv_report_path = ROOT / "reports" / "csv" / "dropout_model"
 plot_report_path = ROOT / "reports" / "plots" / "dropout_model"
 models_path = ROOT / "models" / "dropout_model"
@@ -42,7 +40,7 @@ csv_report_path.mkdir(parents=True, exist_ok=True)
 plot_report_path.mkdir(parents=True, exist_ok=True)
 models_path.mkdir(parents=True, exist_ok=True)
 
-#=============Model-CNN-Base==============
+# =============Model-CNN-Base==============
 import torch.nn as nn
 
 
@@ -136,7 +134,7 @@ class CnnDropout(nn.Module):
         return out_fc
 
 
-#=========load-data============
+# =========load-data============
 if unclean_path.exists():
     print("unclean path exists")
 else:
@@ -153,36 +151,30 @@ else:
     raise FileNotFoundError("test path does not exist")
 
 
-cleaner_output = data_cleaner(train_path,test_path,unclean_path)
+cleaner_output = data_cleaner(train_path, test_path, unclean_path)
 
 dataset_train, dataset_train_base, dataset_test = make_clean_dataset(
-    unclean_path,
-    train_path,
-    test_path,
-    cleaner_output
+    unclean_path, train_path, test_path, cleaner_output
 )
 
-_,train_base_loader, validation_loader, test_loader = make_loader(
-    dataset_train,
-    dataset_train_base,
-    dataset_test
+_, train_base_loader, validation_loader, test_loader = make_loader(
+    dataset_train, dataset_train_base, dataset_test
 )
 
 
-#==========train-requires-obj===========
-
+# ==========train-requires-obj===========
 
 
 classes = dataset_train.classes
-dropouts=[0.3,0.5]
+dropouts = [0.3, 0.5]
 for rate in dropouts:
     run_name = f"dropout_{int(rate*10)}"
-    cnn_dropout = CnnDropout(num_classes=len(classes),dropout_rate=rate).to(DEVICE)
+    cnn_dropout = CnnDropout(num_classes=len(classes), dropout_rate=rate).to(DEVICE)
     loss_fn = nn.CrossEntropyLoss()
 
     optimizer = torch.optim.AdamW(cnn_dropout.parameters(), lr=1e-3)
     start_time = time.perf_counter()
-    history,best_epoch,model = run_experiment(
+    history, best_epoch, model = run_experiment(
         model=cnn_dropout,
         train_loader=train_base_loader,
         val_loader=validation_loader,
@@ -190,7 +182,7 @@ for rate in dropouts:
         optimizer=optimizer,
         device=DEVICE,
         epochs=8,
-        class_names = classes
+        class_names=classes,
     )
 
     elapsed_time = time.perf_counter() - start_time
@@ -199,47 +191,51 @@ for rate in dropouts:
     seconds = elapsed_time % 60
 
     print(f"Training completed in: {minutes}m {seconds:.2f}s ({elapsed_time:.2f}s)")
-    #============save-reports-->csv==============
-    csv_report = pd.DataFrame({
-        "train_f1_score":history["train_f1"],
-        "train_accuracy":history["train_accuracy"],
-
-        "val_f1_score":history["val_f1"],
-        "val_accuracy":history["val_accuracy"],
-
-        "train_loss":history["train_loss"],
-        "val_loss":history["val_loss"]
-    })
+    # ============save-reports-->csv==============
+    csv_report = pd.DataFrame(
+        {
+            "train_f1_score": history["train_f1"],
+            "train_accuracy": history["train_accuracy"],
+            "val_f1_score": history["val_f1"],
+            "val_accuracy": history["val_accuracy"],
+            "train_loss": history["train_loss"],
+            "val_loss": history["val_loss"],
+        }
+    )
 
     cf_report_val = (
         pd.DataFrame(history["val_cf_report"][best_epoch]).transpose().round(4)
     )
-    cf_report_val.to_csv(csv_report_path/f"DropoutModel_CF_VAL{run_name}.csv",index_label="class")
+    cf_report_val.to_csv(
+        csv_report_path / f"DropoutModel_CF_VAL{run_name}.csv", index_label="class"
+    )
     cf_report_train = (
         pd.DataFrame(history["train_cf_report"][best_epoch]).transpose().round(4)
     )
 
-    cf_report_train.to_csv(csv_report_path/f"DropoutModel_CF_train{run_name}.csv",index_label="class")
+    cf_report_train.to_csv(
+        csv_report_path / f"DropoutModel_CF_train{run_name}.csv", index_label="class"
+    )
 
-    csv_report.to_csv(csv_report_path/f"CNN-DropoutModel{run_name}.csv",index=False)
-
+    csv_report.to_csv(csv_report_path / f"CNN-DropoutModel{run_name}.csv", index=False)
 
     dsp = ConfusionMatrixDisplay(
         confusion_matrix=history["val_confusion_matrix"][best_epoch],
-        display_labels=dataset_train.classes)
+        display_labels=dataset_train.classes,
+    )
     dsp.plot(xticks_rotation=45)
     dsp.ax_.set_title(f"Best Epoch: {best_epoch+1}")
-    plt.savefig(plot_report_path/f"CNN-DropoutModel_val{run_name}.png")
+    plt.savefig(plot_report_path / f"CNN-DropoutModel_val{run_name}.png")
 
     dsp = ConfusionMatrixDisplay(
         confusion_matrix=history["train_confusion_matrix"][best_epoch],
-        display_labels=dataset_train.classes)
+        display_labels=dataset_train.classes,
+    )
     dsp.plot(xticks_rotation=45)
 
     dsp.ax_.set_title(f"Best Epoch: {best_epoch+1}")
-    plt.savefig(plot_report_path/f"CNN-DropoutModel_train{run_name}.png")
+    plt.savefig(plot_report_path / f"CNN-DropoutModel_train{run_name}.png")
     plt.close()
 
-
-    torch.save(model.state_dict(),models_path/f"CNN-DropoutModel{run_name}.pth")
+    torch.save(model.state_dict(), models_path / f"CNN-DropoutModel{run_name}.pth")
 print("Saved Successfully")

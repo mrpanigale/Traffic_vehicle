@@ -1,29 +1,27 @@
 """plot-few train samples from loader to see what model see"""
-#=============imports=============
+
+# =============imports=============
 import torch
 from data_provider import (
-
-set_seed,
-SEED,
-compute_hashes,
-get_balanced_sampler,
-data_cleaner,
-get_transform,
-make_clean_dataset,
-make_loader,
-to_str_list,
-ROOT,
-unclean_path,
-train_path,
-test_path,
+    set_seed,
+    SEED,
+    compute_hashes,
+    get_balanced_sampler,
+    data_cleaner,
+    get_transform,
+    make_clean_dataset,
+    make_loader,
+    to_str_list,
+    ROOT,
+    unclean_path,
+    train_path,
+    test_path,
 )
 import matplotlib.pyplot as plt
 
-
-
 plot_report_path = ROOT / "reports" / "plots" / "preprocess"
 plot_report_path.mkdir(parents=True, exist_ok=True)
-#=========load-data============
+# =========load-data============
 
 if train_path.exists():
     print("train path exists")
@@ -31,24 +29,16 @@ else:
     raise FileNotFoundError("train path does not exist")
 
 
-
-cleaner_output = data_cleaner(train_path,test_path,unclean_path)
+cleaner_output = data_cleaner(train_path, test_path, unclean_path)
 
 _, dataset_train_base, _ = make_clean_dataset(
-    unclean_path,
-    train_path,
-    test_path,
-    cleaner_output
+    unclean_path, train_path, test_path, cleaner_output
 )
 
-_,train_base_loader, _, _ = make_loader(
-    _,
-    dataset_train_base,
-    _
-)
+_, train_base_loader, _, _ = make_loader(_, dataset_train_base, _)
 
 classes = dataset_train_base.classes
-#===============plot samples=============
+# ===============plot samples=============
 
 train_images, labels = next(iter(train_base_loader))
 
