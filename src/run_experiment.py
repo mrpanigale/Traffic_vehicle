@@ -21,7 +21,12 @@ def run_epoch(model,loss_fn,loader,device,optimizer=None,class_names=None):
     """This function runs one epoch of training and validation."""
     is_training = optimizer is not None
     model.to(device)
-    model.train(is_training)
+
+    model.eval()
+
+    if is_training:
+        for module in getattr(model, "trainable_modules", [model]):
+            module.train()
 
 
     total_loss = 0.0
