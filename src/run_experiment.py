@@ -73,7 +73,18 @@ def run_epoch(model,loss_fn,loader,device,optimizer=None,class_names=None):
 
     }
 
-def run_experiment(model,loss_fn,train_loader,val_loader,device,optimizer=None,epochs = 8,class_names =None):
+def run_experiment(
+        model,
+        loss_fn,
+        train_loader,
+        val_loader,
+        device,
+        optimizer=None,
+        epochs = 8,
+        class_names =None,
+        scheduler=None
+):
+
     """This function runs experiments and return the reports"""
     history= {
         "train_loss":[],
@@ -113,6 +124,8 @@ def run_experiment(model,loss_fn,train_loader,val_loader,device,optimizer=None,e
             device,
             class_names=class_names
         )
+        if scheduler:
+            scheduler.step()
         history["train_f1"].append(train_metrics["f1"])
         history["train_accuracy"].append(train_metrics["accuracy"])
         history["train_loss"].append(train_metrics["loss"])
