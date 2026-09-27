@@ -294,8 +294,10 @@ def make_clean_dataset(unclean_set_path: Path,train_set_path:Path,test_set_path:
 
     return train,train_base, test
 
-def make_loader(train_set,train_base_set,test_set):
+def make_loader(train_set,train_base_set,test_set,balanced=True):
     """make loader for train and test"""
+
+
     targets = [label for _, label in train_set.samples]
 
     train_idx, val_idx = train_test_split(
@@ -308,13 +310,15 @@ def make_loader(train_set,train_base_set,test_set):
 
     train_subset = Subset(train_set, train_idx)
     val_subset = Subset(train_base_set, val_idx)
-
-    sampler = get_balanced_sampler(train_subset)
+    if balanced:
+        sampler = get_balanced_sampler(train_subset)
     train_base_subset = Subset(train_base_set,train_idx)
-
-    train_base_loader = DataLoader(train_base_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
-    train_loader = DataLoader(train_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
-
+    if balanced:
+        train_base_loader = DataLoader(train_base_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
+        train_loader = DataLoader(train_subset,sampler=sampler,batch_size=32,shuffle=False,num_workers=0)
+    else:
+        train_base_loader = DataLoader(train_base_subset, batch_size=32, shuffle=True, num_workers=0)
+        train_loader = DataLoader(train_subset, batch_size=32, shuffle=True, num_workers=0)
     validation_loader = DataLoader(val_subset,batch_size=64,shuffle=False,num_workers=0)
 
 
