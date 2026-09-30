@@ -226,7 +226,11 @@ def get_transform():
 
 
 def make_clean_dataset(
-    unclean_set_path: Path, train_set_path: Path, test_set_path: Path, report: dict
+    unclean_set_path: Path,
+    train_set_path: Path,
+    test_set_path: Path,
+    report: dict,
+    hf=False,
 ):
     bad_paths = set(
         report["corrupt"]
@@ -238,32 +242,82 @@ def make_clean_dataset(
         + report["train_internal_conflicts"]
     )
 
-    # check paths
     bad_paths = {p.resolve() for p in bad_paths}
 
-    # check paths function
     def is_safe(file_path: str):
         return Path(file_path).resolve() not in bad_paths
 
+    if hf:
+        train = RGBImageFolder(
+            root=train_set_path,
+            transform=None,
+            is_valid_file=is_safe,
+        )
+
+        unclean = RGBImageFolder(
+            root=unclean_set_path,
+            transform=None,
+            is_valid_file=is_safe,
+        )
+
+        train_base = RGBImageFolder(
+            root=train_set_path,
+            transform=None,
+            is_valid_file=is_safe,
+        )
+
+        unclean_base = RGBImageFolder(
+            root=unclean_set_path,
+            transform=None,
+            is_valid_file=is_safe,
+        )
+
+        test = RGBImageFolder(
+            root=test_set_path,
+            transform=None,
+            is_valid_file=is_safe,
+        )
+
+        assert train.class_to_idx == unclean.class_to_idx, \
+            "Class mapping mismatch!"
+
+        train.samples.extend(unclean.samples)
+        train.targets.extend(unclean.targets)
+
+        train_base.samples.extend(unclean_base.samples)
+        train_base.targets.extend(unclean_base.targets)
+
+        return train, train_base, test
+
+    # Existing ResNet pipeline
     aug_transform, base_transform = get_transform()
 
     train = RGBImageFolder(
-        root=train_set_path, transform=aug_transform, is_valid_file=is_safe
+        root=train_set_path,
+        transform=aug_transform,
+        is_valid_file=is_safe,
     )
 
     unclean = RGBImageFolder(
-        root=unclean_set_path, transform=aug_transform, is_valid_file=is_safe
+        root=unclean_set_path,
+        transform=aug_transform,
+        is_valid_file=is_safe,
     )
 
     train_base = RGBImageFolder(
-        root=train_set_path, transform=base_transform, is_valid_file=is_safe
+        root=train_set_path,
+        transform=base_transform,
+        is_valid_file=is_safe,
     )
 
     unclean_base = RGBImageFolder(
-        root=unclean_set_path, transform=base_transform, is_valid_file=is_safe
+        root=unclean_set_path,
+        transform=base_transform,
+        is_valid_file=is_safe,
     )
 
-    assert train.class_to_idx == unclean.class_to_idx, "Class mapping mismatch!"
+    assert train.class_to_idx == unclean.class_to_idx, \
+        "Class mapping mismatch!"
 
     train.samples.extend(unclean.samples)
     train.targets.extend(unclean.targets)
@@ -272,7 +326,9 @@ def make_clean_dataset(
     train_base.targets.extend(unclean_base.targets)
 
     test = RGBImageFolder(
-        root=test_set_path, transform=base_transform, is_valid_file=is_safe
+        root=test_set_path,
+        transform=base_transform,
+        is_valid_file=is_safe,
     )
 
     return train, train_base, test
