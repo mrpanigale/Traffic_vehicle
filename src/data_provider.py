@@ -278,8 +278,7 @@ def make_clean_dataset(
             is_valid_file=is_safe,
         )
 
-        assert train.class_to_idx == unclean.class_to_idx, \
-            "Class mapping mismatch!"
+        assert train.class_to_idx == unclean.class_to_idx, "Class mapping mismatch!"
 
         train.samples.extend(unclean.samples)
         train.targets.extend(unclean.targets)
@@ -316,8 +315,7 @@ def make_clean_dataset(
         is_valid_file=is_safe,
     )
 
-    assert train.class_to_idx == unclean.class_to_idx, \
-        "Class mapping mismatch!"
+    assert train.class_to_idx == unclean.class_to_idx, "Class mapping mismatch!"
 
     train.samples.extend(unclean.samples)
     train.targets.extend(unclean.targets)
