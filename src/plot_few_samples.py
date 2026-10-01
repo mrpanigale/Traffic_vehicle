@@ -5,13 +5,9 @@ import torch
 from data_provider import (
     set_seed,
     SEED,
-    compute_hashes,
-    get_balanced_sampler,
     data_cleaner,
-    get_transform,
     make_clean_dataset,
     make_loader,
-    to_str_list,
     ROOT,
     unclean_path,
     train_path,
@@ -39,7 +35,7 @@ _, train_base_loader, _, _ = make_loader(_, dataset_train_base, _)
 
 classes = dataset_train_base.classes
 # ===============plot samples=============
-
+set_seed(SEED)
 train_images, labels = next(iter(train_base_loader))
 
 mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
