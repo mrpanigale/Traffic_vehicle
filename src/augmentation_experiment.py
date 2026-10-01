@@ -1,20 +1,14 @@
 """In this experiment we will inspect effect of augmentation given compare reports with base-model ."""
 
 # ===========import============
-from pathlib import Path
 import time
-
 
 from data_provider import (
     set_seed,
     SEED,
-    compute_hashes,
-    get_balanced_sampler,
     data_cleaner,
-    get_transform,
     make_clean_dataset,
     make_loader,
-    to_str_list,
     ROOT,
     unclean_path,
     train_path,
