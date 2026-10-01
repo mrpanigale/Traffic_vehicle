@@ -1,6 +1,6 @@
 """We will load , fine tune and save a model from hugging face to add to predict.py"""
 
-#=========import============
+# =========import============
 import time
 from sklearn.metrics import (
     accuracy_score,
@@ -26,11 +26,20 @@ import pandas as pd
 
 import torch
 from transformers import (
- AutoImageProcessor,
- AutoModelForImageClassification,
+    AutoImageProcessor,
+    AutoModelForImageClassification,
 )
 
-classes = ['ambulance', 'autobus', 'kamyun', 'kamyunet', 'minibus', 'savari', 'taxi', 'vanet']
+classes = [
+    "ambulance",
+    "autobus",
+    "kamyun",
+    "kamyunet",
+    "minibus",
+    "savari",
+    "taxi",
+    "vanet",
+]
 
 # ===========control-randomness=============
 set_seed(SEED)
@@ -44,7 +53,9 @@ models_path = ROOT / "models" / "hugging_face_model"
 csv_report_path.mkdir(parents=True, exist_ok=True)
 plot_report_path.mkdir(parents=True, exist_ok=True)
 models_path.mkdir(parents=True, exist_ok=True)
-#========class==========
+
+
+# ========class==========
 class HFImageDataset(torch.utils.data.Dataset):
     def __init__(self, dataset, processor):
         self.dataset = dataset
@@ -58,39 +69,32 @@ class HFImageDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         image, label = self.dataset[index]
 
-        inputs = self.processor(
-            image,
-            return_tensors="pt"
-        )
+        inputs = self.processor(image, return_tensors="pt")
 
         pixel_values = inputs["pixel_values"].squeeze(0)
 
         return pixel_values, label
 
-#=============load-model=============
+
+# =============load-model=============
 MODEL_ID = "apple/mobilevit-small"
 NUM_CLASSES = len(classes)
-#==============labels=============
-id2label = {
-    idx:class_name
-    for idx, class_name in enumerate(classes)
-}
+# ==============labels=============
+id2label = {idx: class_name for idx, class_name in enumerate(classes)}
 
-label2id = {
-    class_name:idx
-    for idx, class_name in enumerate(classes)
-}
+label2id = {class_name: idx for idx, class_name in enumerate(classes)}
 
-#=============preprocessor=========
+# =============preprocessor=========
 preprocessor = AutoImageProcessor.from_pretrained(MODEL_ID)
 
-#=============model=========
+# =============model=========
 model = AutoModelForImageClassification.from_pretrained(
     MODEL_ID,
     num_labels=NUM_CLASSES,
     id2label=id2label,
     label2id=label2id,
-    ignore_mismatched_sizes=True,)
+    ignore_mismatched_sizes=True,
+)
 
 model.to(DEVICE)
 
@@ -99,8 +103,7 @@ print(f"<device: {DEVICE}>")
 print(f"<classes: {classes}>")
 
 
-
-#=========freeze-backbone=========
+# =========freeze-backbone=========
 for param in model.mobilevit.parameters():
     param.requires_grad = False
 
@@ -111,8 +114,8 @@ for param in model.mobilevit.encoder.layer[4].parameters():
 # classifier
 for param in model.classifier.parameters():
     param.requires_grad = True
-#=========load-data=========
-report = data_cleaner(train_path, test_path,unclean_path)
+# =========load-data=========
+report = data_cleaner(train_path, test_path, unclean_path)
 
 
 train_dataset, train_base_dataset, test_dataset = make_clean_dataset(
@@ -122,9 +125,6 @@ train_dataset, train_base_dataset, test_dataset = make_clean_dataset(
     report,
     hf=True,
 )
-
-
-
 
 
 train_dataset = HFImageDataset(train_dataset, preprocessor)
@@ -139,7 +139,7 @@ train_loader, train_base_loader, validation_loader, test_loader = make_loader(
 )
 
 
-#=========training=========
+# =========training=========
 EPOCHS = 10
 LEARNING_RATE = 1e-4
 WEIGHT_DECAY = 1e-4
@@ -325,16 +325,13 @@ elapsed_time = time.perf_counter() - start_time
 minutes = int(elapsed_time // 60)
 seconds = elapsed_time % 60
 
-print(
-    f"Training completed in: "
-    f"{minutes}m {seconds:.2f}s ({elapsed_time:.2f}s)"
-)
+print(f"Training completed in: " f"{minutes}m {seconds:.2f}s ({elapsed_time:.2f}s)")
 
 print(f"Best epoch: {best_epoch + 1}")
 print(f"Best validation loss: {best_val_loss:.4f}")
 
 
-#=========save-reports=========
+# =========save-reports=========
 csv_report = pd.DataFrame(
     {
         "train_f1_score": history["train_f1"],
@@ -351,11 +348,7 @@ csv_report.to_csv(
     index=False,
 )
 
-cf_report_val = (
-    pd.DataFrame(history["val_cf_report"][best_epoch])
-    .transpose()
-    .round(4)
-)
+cf_report_val = pd.DataFrame(history["val_cf_report"][best_epoch]).transpose().round(4)
 
 cf_report_val.to_csv(
     csv_report_path / "MobileViT_best_val_classification_report.csv",
@@ -363,9 +356,7 @@ cf_report_val.to_csv(
 )
 
 cf_report_train = (
-    pd.DataFrame(history["train_cf_report"][best_epoch])
-    .transpose()
-    .round(4)
+    pd.DataFrame(history["train_cf_report"][best_epoch]).transpose().round(4)
 )
 
 cf_report_train.to_csv(
@@ -374,7 +365,7 @@ cf_report_train.to_csv(
 )
 
 
-#=========save-confusion-matrices=========
+# =========save-confusion-matrices=========
 
 dsp = ConfusionMatrixDisplay(
     confusion_matrix=history["val_confusion_matrix"][best_epoch],
@@ -385,9 +376,7 @@ dsp.plot(xticks_rotation=45)
 dsp.ax_.set_title(f"MobileViT - Best Epoch: {best_epoch + 1}")
 
 plt.tight_layout()
-plt.savefig(
-    plot_report_path / "MobileViT_best_val_confusion_matrix.png"
-)
+plt.savefig(plot_report_path / "MobileViT_best_val_confusion_matrix.png")
 plt.close()
 
 
@@ -400,13 +389,11 @@ dsp.plot(xticks_rotation=45)
 dsp.ax_.set_title(f"MobileViT - Best Epoch: {best_epoch + 1}")
 
 plt.tight_layout()
-plt.savefig(
-    plot_report_path / "MobileViT_best_train_confusion_matrix.png"
-)
+plt.savefig(plot_report_path / "MobileViT_best_train_confusion_matrix.png")
 plt.close()
 
 
-#=========save-best-model=========
+# =========save-best-model=========
 best_model_path = models_path / "best_model"
 best_model_path.mkdir(parents=True, exist_ok=True)
 
