@@ -9,7 +9,7 @@ import json
 import torch
 import numpy as np
 import random
-
+from collections import Counter
 # loaders requires -->
 from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import DataLoader, Subset
@@ -406,6 +406,14 @@ if __name__ == "__main__":
     dataset_train, dataset_train_base, dataset_test = make_clean_dataset(
         unclean_path, train_path, test_path, cleaner_output
     )
+
+    train_frequency = Counter((dataset_train.targets))
+    train_frequency = {dataset_train.classes[class_idx]:count for class_idx,count in train_frequency.items()}
+    test_frequency = Counter((dataset_test.targets))
+    test_frequency = {dataset_test.classes[class_idx]: count for class_idx, count in test_frequency.items()}
+    print(f"Train classes frequency: \n{train_frequency}")
+    print(f"Test classes frequency : \n{test_frequency}")
+    print("="*30)
     # output make loader
     train_loader, train_base_loader, validation_loader, test_loader = make_loader(
         dataset_train, dataset_train_base, dataset_test
