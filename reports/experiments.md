@@ -274,7 +274,7 @@ return self.head(x)
 >
 > با این حال برای مقایسه، مدل رو با BCE هم آموزش دادیم تا ببینیم تغییر Loss چه تأثیری روی همین مسئله میذاره.
 
-![img\_13.png](img/img_1)
+![img\_13.png](img/img_13.png)
 
 > در این آزمایش بهترین Validation Loss حدود 0.19 بوده که از بهترین Validation Loss مدل با Cross-Entropy یعنی حدود 0.87 کمتره.
 >
